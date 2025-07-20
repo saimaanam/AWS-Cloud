@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Update and install Apache
+yum update -y
+yum install -y httpd -y
+
+# Enable and start Apache
+systemctl enable httpd
+systemctl start httpd
+
+# Get instance metadata
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+HOSTNAME=$(hostname)
+
+# Create Apache config for HTTP (port 80)
+cat <<EOF > /etc/httpd/conf.d/http.conf
+<VirtualHost *:80>
+    DocumentRoot "/var/www/html"
+    ServerName ${HOSTNAME}
+
+    <Directory "/var/www/html">
+        AllowOverride All
+    </Directory>
+</VirtualHost>
+EOF
+
+# Create index.html
+cat <<EOF > /var/www/html/index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔒 Secured Web Server</title>
+    <style>
+        body { font-family: Arial; background-color: #e2f0f9; text-align: center; padding: 50px; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
+        h1 { color: green; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔐 Hello from a Protected EC2 Web Server!</h1>
+        <p><strong>Instance ID:</strong> $INSTANCE_ID</p>
+        <p><strong>Private IP:</strong> $PRIVATE_IP</p>
+        <p><strong>Hostname:</strong> $HOSTNAME</p>
+        <p>Served securely via <b>HTTPS</b> using Apache + Amazon Linux 2</p>
+    </div>
+</body>
+</html>
+EOF
+
+# Restart Apache to load the HTTP config
+systemctl restart httpd
