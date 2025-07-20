@@ -1,0 +1,36 @@
+#!/bin/bash
+# Update & install Apache
+yum update -y
+yum install -y httpd
+
+# Enable and start Apache
+systemctl enable httpd
+systemctl start httpd
+
+# Get metadata
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+HOSTNAME=$(hostname)
+
+# Create simple HTML page
+cat <<EOF > /var/www/html/index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Awesome Web Server</title>
+    <style>
+        body { font-family: Arial; background-color: #f4f4f4; text-align: center; padding: 50px; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Hello from my unsecured, easy to hack EC2instance webserver! </h1>
+        <p><strong>Instance ID:</strong> $INSTANCE_ID</p>
+        <p><strong>Private IP:</strong> $PRIVATE_IP</p>
+        <p><strong>Hostname:</strong> $HOSTNAME</p>
+        <p>Powered by <b>Amazon Linux 2</b> + Apache</p>
+    </div>
+</body>
+</html>
+EOF
